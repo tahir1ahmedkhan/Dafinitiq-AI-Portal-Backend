@@ -4,14 +4,26 @@ const expenseSchema = new mongoose.Schema({
   employeeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Employee',
+    required: false
+  },
+  vendor: {
+    type: String,
+    required: false
+  },
+  category: {
+    type: String,
     required: true
   },
-  category: String,
   amount: {
     type: Number,
     required: true
   },
   description: String,
+  paymentMethod: {
+    type: String,
+    enum: ['Cash', 'Debit Card', 'Credit Card', 'Bank Transfer', 'Check'],
+    default: 'Cash'
+  },
   date: {
     type: Date,
     default: Date.now
@@ -19,7 +31,11 @@ const expenseSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
-    default: 'Pending'
+    default: 'Approved'
+  },
+  createdBy: {
+    type: String,
+    default: 'Employee'
   },
   receipt: String
 }, { timestamps: true });

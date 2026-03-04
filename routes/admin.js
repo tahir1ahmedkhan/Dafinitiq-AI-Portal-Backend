@@ -193,4 +193,273 @@ router.delete('/performance/:id', auth, async (req, res) => {
   }
 });
 
+// Get all incomes
+router.get('/incomes', auth, async (req, res) => {
+  try {
+    const Income = require('../models/Income');
+    const incomes = await Income.find().sort({ createdAt: -1 });
+    res.json(incomes);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Create income
+router.post('/incomes', auth, async (req, res) => {
+  try {
+    const Income = require('../models/Income');
+    const newIncome = new Income(req.body);
+    const income = await newIncome.save();
+    res.json(income);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Update income
+router.put('/incomes/:id', auth, async (req, res) => {
+  try {
+    const Income = require('../models/Income');
+    const income = await Income.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(income);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Delete income
+router.delete('/incomes/:id', auth, async (req, res) => {
+  try {
+    const Income = require('../models/Income');
+    await Income.findByIdAndDelete(req.params.id);
+    res.json({ msg: 'Income deleted' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Get all expenses (admin)
+router.get('/expenses', auth, async (req, res) => {
+  try {
+    const Expense = require('../models/Expense');
+    const expenses = await Expense.find().sort({ createdAt: -1 });
+    res.json(expenses);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Create expense (admin)
+router.post('/expenses', auth, async (req, res) => {
+  try {
+    const Expense = require('../models/Expense');
+    
+    // Validate required fields
+    const { vendor, category, amount, paymentMethod, date } = req.body;
+    
+    if (!category || !amount) {
+      return res.status(400).json({ msg: 'Category and amount are required' });
+    }
+    
+    const newExpense = new Expense({
+      vendor: vendor || 'N/A',
+      category,
+      amount: parseFloat(amount),
+      paymentMethod: paymentMethod || 'Cash',
+      date: date || new Date(),
+      description: req.body.description || '',
+      createdBy: 'Admin',
+      status: 'Approved'
+    });
+    
+    const expense = await newExpense.save();
+    res.json(expense);
+  } catch (err) {
+    console.error('Error creating expense:', err.message);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+// Update expense (admin)
+router.put('/expenses/:id', auth, async (req, res) => {
+  try {
+    const Expense = require('../models/Expense');
+    const expense = await Expense.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(expense);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Delete expense (admin)
+router.delete('/expenses/:id', auth, async (req, res) => {
+  try {
+    const Expense = require('../models/Expense');
+    await Expense.findByIdAndDelete(req.params.id);
+    res.json({ msg: 'Expense deleted' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Get all contracts (admin)
+router.get('/contracts', auth, async (req, res) => {
+  try {
+    const Contract = require('../models/Contract');
+    const contracts = await Contract.find().sort({ createdAt: -1 });
+    res.json(contracts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Create contract (admin)
+router.post('/contracts', auth, async (req, res) => {
+  try {
+    const Contract = require('../models/Contract');
+    
+    // Validate required fields
+    const { contractName, clientName, value, startDate } = req.body;
+    
+    if (!contractName || !clientName || !value || !startDate) {
+      return res.status(400).json({ msg: 'Contract name, client name, value, and start date are required' });
+    }
+    
+    const newContract = new Contract({
+      contractName,
+      clientName,
+      value: parseFloat(value),
+      paymentSchedule: req.body.paymentSchedule || 'Monthly',
+      status: req.body.status || 'Pending',
+      startDate,
+      endDate: req.body.endDate || null,
+      description: req.body.description || ''
+    });
+    
+    const contract = await newContract.save();
+    res.json(contract);
+  } catch (err) {
+    console.error('Error creating contract:', err.message);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+// Update contract (admin)
+router.put('/contracts/:id', auth, async (req, res) => {
+  try {
+    const Contract = require('../models/Contract');
+    const contract = await Contract.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(contract);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Delete contract (admin)
+router.delete('/contracts/:id', auth, async (req, res) => {
+  try {
+    const Contract = require('../models/Contract');
+    await Contract.findByIdAndDelete(req.params.id);
+    res.json({ msg: 'Contract deleted' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Get all leaves (admin)
+router.get('/leaves', auth, async (req, res) => {
+  try {
+    const Leave = require('../models/Leave');
+    const leaves = await Leave.find()
+      .populate('employeeId', 'fullName email')
+      .sort({ createdAt: -1 });
+    res.json(leaves);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Approve leave (admin)
+router.put('/leaves/:id/approve', auth, async (req, res) => {
+  try {
+    const Leave = require('../models/Leave');
+    const leave = await Leave.findByIdAndUpdate(
+      req.params.id,
+      { status: 'Approved' },
+      { new: true }
+    ).populate('employeeId', 'fullName email');
+    res.json(leave);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Reject leave (admin)
+router.put('/leaves/:id/reject', auth, async (req, res) => {
+  try {
+    const Leave = require('../models/Leave');
+    const leave = await Leave.findByIdAndUpdate(
+      req.params.id,
+      { status: 'Rejected' },
+      { new: true }
+    ).populate('employeeId', 'fullName email');
+    res.json(leave);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Mark leave as unapproved (admin)
+router.put('/leaves/:id/unapprove', auth, async (req, res) => {
+  try {
+    const Leave = require('../models/Leave');
+    const leave = await Leave.findByIdAndUpdate(
+      req.params.id,
+      { status: 'Pending' },
+      { new: true }
+    ).populate('employeeId', 'fullName email');
+    res.json(leave);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Delete leave (admin)
+router.delete('/leaves/:id', auth, async (req, res) => {
+  try {
+    const Leave = require('../models/Leave');
+    await Leave.findByIdAndDelete(req.params.id);
+    res.json({ msg: 'Leave deleted' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;
