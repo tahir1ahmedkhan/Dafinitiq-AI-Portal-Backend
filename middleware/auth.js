@@ -9,7 +9,14 @@ module.exports = function(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.employee = decoded.employee;
+    
+    // Support both employee and admin tokens
+    if (decoded.employee) {
+      req.employee = decoded.employee;
+    } else if (decoded.admin) {
+      req.admin = decoded.admin;
+    }
+    
     next();
   } catch (err) {
     res.status(401).json({ msg: 'Token is not valid' });

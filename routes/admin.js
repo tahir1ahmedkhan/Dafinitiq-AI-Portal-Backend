@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 const Employee = require('../models/Employee');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 
 // Admin login
@@ -117,6 +118,18 @@ router.post('/payslips', auth, async (req, res) => {
     const Payslip = require('../models/Payslip');
     const newPayslip = new Payslip(req.body);
     const payslip = await newPayslip.save();
+    
+    // Create notification for employee
+    await new Notification({
+      recipientId: req.body.employeeId,
+      recipientType: 'Employee',
+      type: 'payslip_generated',
+      title: 'New Payslip Generated',
+      message: `Your payslip for ${req.body.month} ${req.body.year} has been generated`,
+      relatedId: payslip._id,
+      relatedModel: 'Payslip'
+    }).save();
+    
     res.json(payslip);
   } catch (err) {
     console.error(err.message);
@@ -158,6 +171,18 @@ router.post('/performance', auth, async (req, res) => {
     const Performance = require('../models/Performance');
     const newReview = new Performance(req.body);
     const review = await newReview.save();
+    
+    // Create notification for employee
+    await new Notification({
+      recipientId: req.body.employeeId,
+      recipientType: 'Employee',
+      type: 'performance_review',
+      title: 'New Performance Review',
+      message: `A new performance review has been added for you with a rating of ${req.body.rating}/5`,
+      relatedId: review._id,
+      relatedModel: 'Performance'
+    }).save();
+    
     res.json(review);
   } catch (err) {
     console.error(err.message);
@@ -411,6 +436,18 @@ router.put('/leaves/:id/approve', auth, async (req, res) => {
       { status: 'Approved' },
       { new: true }
     ).populate('employeeId', 'fullName email');
+    
+    // Create notification for employee
+    await new Notification({
+      recipientId: leave.employeeId._id,
+      recipientType: 'Employee',
+      type: 'leave_approved',
+      title: 'Leave Request Approved',
+      message: `Your ${leave.leaveType} request from ${new Date(leave.startDate).toLocaleDateString()} to ${new Date(leave.endDate).toLocaleDateString()} has been approved`,
+      relatedId: leave._id,
+      relatedModel: 'Leave'
+    }).save();
+    
     res.json(leave);
   } catch (err) {
     console.error(err.message);
@@ -427,6 +464,18 @@ router.put('/leaves/:id/reject', auth, async (req, res) => {
       { status: 'Rejected' },
       { new: true }
     ).populate('employeeId', 'fullName email');
+    
+    // Create notification for employee
+    await new Notification({
+      recipientId: leave.employeeId._id,
+      recipientType: 'Employee',
+      type: 'leave_rejected',
+      title: 'Leave Request Rejected',
+      message: `Your ${leave.leaveType} request from ${new Date(leave.startDate).toLocaleDateString()} to ${new Date(leave.endDate).toLocaleDateString()} has been rejected`,
+      relatedId: leave._id,
+      relatedModel: 'Leave'
+    }).save();
+    
     res.json(leave);
   } catch (err) {
     console.error(err.message);

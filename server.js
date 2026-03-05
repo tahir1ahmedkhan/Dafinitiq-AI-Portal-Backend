@@ -22,6 +22,7 @@ app.use('/api/payslips', require('./routes/payslips'));
 app.use('/api/leaves', require('./routes/leaves'));
 app.use('/api/performance', require('./routes/performance'));
 app.use('/api/expenses', require('./routes/expenses'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

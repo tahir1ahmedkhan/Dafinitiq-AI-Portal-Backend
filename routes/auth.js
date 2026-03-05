@@ -43,7 +43,7 @@ router.post('/register', [
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
-      res.json({ token });
+      res.json({ token, role: 'employee' });
     });
   } catch (err) {
     console.error(err.message);
@@ -51,7 +51,7 @@ router.post('/register', [
   }
 });
 
-// Login
+// Unified Login - checks both Employee and Admin
 router.post('/login', [
   body('email').isEmail(),
   body('password').exists()
@@ -64,6 +64,30 @@ router.post('/login', [
   const { email, password } = req.body;
 
   try {
+    // First check if it's an admin
+    const Admin = require('../models/Admin');
+    let admin = await Admin.findOne({ email });
+    
+    if (admin) {
+      const isMatch = await bcrypt.compare(password, admin.password);
+      if (!isMatch) {
+        return res.status(400).json({ msg: 'Invalid credentials' });
+      }
+
+      const payload = {
+        admin: {
+          id: admin.id
+        }
+      };
+
+      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
+        if (err) throw err;
+        res.json({ token, role: 'admin' });
+      });
+      return;
+    }
+
+    // If not admin, check if it's an employee
     let employee = await Employee.findOne({ email });
     if (!employee) {
       return res.status(400).json({ msg: 'Invalid credentials' });
@@ -82,7 +106,7 @@ router.post('/login', [
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
-      res.json({ token });
+      res.json({ token, role: 'employee' });
     });
   } catch (err) {
     console.error(err.message);

@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Leave = require('../models/Leave');
+const Employee = require('../models/Employee');
+const Admin = require('../models/Admin');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 
 // Get all leaves for logged-in employee
@@ -35,6 +38,24 @@ router.post('/', auth, async (req, res) => {
     });
     
     const leave = await newLeave.save();
+    
+    // Get employee details
+    const employee = await Employee.findById(req.employee.id);
+    
+    // Create notification for all admins
+    const admins = await Admin.find();
+    for (const admin of admins) {
+      await new Notification({
+        recipientId: admin._id,
+        recipientType: 'Admin',
+        type: 'leave_request',
+        title: 'New Leave Request',
+        message: `${employee.fullName} has submitted a ${leaveType} request from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`,
+        relatedId: leave._id,
+        relatedModel: 'Leave'
+      }).save();
+    }
+    
     res.json(leave);
   } catch (err) {
     console.error('Error creating leave:', err.message);
